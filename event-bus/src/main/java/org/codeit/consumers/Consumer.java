@@ -4,14 +4,12 @@ import org.codeit.domain.CreateOffer;
 import org.codeit.producers.Producer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
+import org.springframework.http.*;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
-import java.time.Instant;
 import java.util.Arrays;
 
 @Service
@@ -19,8 +17,7 @@ public class Consumer {
 
     private final Logger logger = LoggerFactory.getLogger(Producer.class);
 
-    //@Autowired
-    //private RestTemplate restTemplate;
+    private RestTemplate restTemplate = new RestTemplate();
 
     @KafkaListener(topics = "users", groupId = "group_id")
     public void consume(String message) throws IOException {
@@ -31,21 +28,18 @@ public class Consumer {
     public void consumeHistory(CreateOffer createOffer) throws IOException {
         logger.info("#### -> Consumed createOffer:" + createOffer);
 
-        /*ResponseEntity result = restTemplate.exchange("http://localhost:9090/history/create-offer",
-                HttpMethod.POST, getCreateOfferHttpEntity(), CreateOffer.class);
+        ResponseEntity result = restTemplate.exchange("http://localhost:9090/history/create-offer",
+                HttpMethod.POST, getCreateOfferHttpEntity(createOffer), CreateOffer.class);
 
         if (result.getStatusCode() != HttpStatus.OK) {
             logger.info("TODO RETRY");
-        }*/
+        }
     }
 
-    private HttpEntity<CreateOffer> getCreateOfferHttpEntity() {
+    private HttpEntity<CreateOffer> getCreateOfferHttpEntity(CreateOffer createOffer) {
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
-        HttpEntity<CreateOffer> entity = new HttpEntity<>(headers);
-        entity.getBody().setId("myId");
-        entity.getBody().setCreateTime(Instant.now());
-        entity.getBody().setName("myOffer");
+        HttpEntity<CreateOffer> entity = new HttpEntity<>(createOffer, headers);
         return entity;
     }
 
