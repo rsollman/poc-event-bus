@@ -32,7 +32,7 @@ public class Consumer {
                 HttpMethod.POST, getCreateOfferHttpEntity(createOffer), CreateOffer.class);
 
         if (result.getStatusCode() != HttpStatus.OK) {
-            logger.info("TODO RETRY");
+            throw new RuntimeException("Triggering retry");
         }
     }
 
