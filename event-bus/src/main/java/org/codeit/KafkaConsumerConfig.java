@@ -1,11 +1,13 @@
 package org.codeit;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.codeit.domain.CreateOffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.kafka.ConcurrentKafkaListenerContainerFactoryConfigurer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
@@ -19,6 +21,7 @@ import org.springframework.retry.support.RetryTemplate;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @EnableKafka
 @Configuration
@@ -41,20 +44,20 @@ public class KafkaConsumerConfig {
     public RetryTemplate kafkaRetry(){
         RetryTemplate retryTemplate = new RetryTemplate();
         FixedBackOffPolicy fixedBackOffPolicy = new FixedBackOffPolicy();
-        fixedBackOffPolicy.setBackOffPeriod(100*1000l);
+        fixedBackOffPolicy.setBackOffPeriod(10*1000l);     // 10 seconds for now
         retryTemplate.setBackOffPolicy(fixedBackOffPolicy);
         SimpleRetryPolicy retryPolicy = new SimpleRetryPolicy();
-        retryPolicy.setMaxAttempts(3);
+        retryPolicy.setMaxAttempts(100);
         retryTemplate.setRetryPolicy(retryPolicy);
         return retryTemplate;
     }
 
-    /*@Bean
+    @Bean
     public ConcurrentKafkaListenerContainerFactory<?, ?> createOfferKafkaListenerContainerFactory(
             ConcurrentKafkaListenerContainerFactoryConfigurer factoryConfigurer,
             ConsumerFactory<Object, Object> kafkaConsumerFactory) {
 
-        ConcurrentKafkaListenerContainerFactory<String, CreateOffer> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        ConcurrentKafkaListenerContainerFactory<Object, Object> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factoryConfigurer.configure(factory, kafkaConsumerFactory);
 
         factory.setRetryTemplate(kafkaRetry());
@@ -65,7 +68,7 @@ public class KafkaConsumerConfig {
             return Optional.empty();
         });
         return factory;
-    }*/
+    }
 
     public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactory(String groupId) {
         ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
@@ -79,19 +82,24 @@ public class KafkaConsumerConfig {
     }
 
 
-    public ConsumerFactory<String, CreateOffer> createOfferConsumerFactory() {
+    public ConsumerFactory<Object, Object> createOfferConsumerFactory() {
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, "history_group");
-        return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), new JsonDeserializer<>(CreateOffer.class));
+        DefaultKafkaConsumerFactory defaultKafkaConsumerFactory = new DefaultKafkaConsumerFactory(props);
+
+        defaultKafkaConsumerFactory.setKeyDeserializer(new StringDeserializer());
+        defaultKafkaConsumerFactory.setValueDeserializer(new JsonDeserializer<>(CreateOffer.class));
+        return defaultKafkaConsumerFactory;
+        //return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), new JsonDeserializer<>(CreateOffer.class));
     }
 
-    @Bean
+    /*@Bean
     public ConcurrentKafkaListenerContainerFactory<String, CreateOffer> createOfferKafkaListenerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, CreateOffer> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(createOfferConsumerFactory());
         return factory;
-    }
+    }*/
 
 
 }

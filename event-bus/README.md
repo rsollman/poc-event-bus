@@ -2,8 +2,8 @@ Download kafka and install and start as follows:
 
 $ tar -xzf kafka_2.13-2.7.0.tgz
 $ cd kafka_2.13-2.7.0
-$ bin/zookeeper-server-start.sh config/zookeeper.properties
-$ bin/kafka-server-start.sh config/server.properties
+$ ./bin/zookeeper-server-start.sh config/zookeeper.properties
+$ ./bin/kafka-server-start.sh config/server.properties
 
 Start spring-boot app
 
