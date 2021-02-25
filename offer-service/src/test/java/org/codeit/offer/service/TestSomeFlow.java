@@ -8,17 +8,31 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
-public class TestHistory {
+public class TestSomeFlow {
 
     private TestRestTemplate restTemplate = new TestRestTemplate();
 
     @Test
-    public void testHistory() {
+    public void testSomeFlow() throws Exception {
+
+        CompletableFuture<String> completableFuture
+                = CompletableFuture.supplyAsync(() -> "Hello");
+
+        CompletableFuture<String> future = completableFuture
+                .thenApply(s -> s + " World");
+
+        assertEquals("Hello World", future.get());
+
         restTemplate.exchange("http://localhost:9000/kafka/history/create-offer", HttpMethod.POST, getCreateOfferHttpEntity(), CreateOffer.class);
     }
 
